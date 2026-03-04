@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.ensemble import IsolationForest
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import yfinance as yf
 
 app = FastAPI(title="Stock Market Analysis API")
@@ -67,7 +68,8 @@ def get_historical_data(
 
 @app.get("/api/analysis/{ticker}")
 def get_analysis(ticker: str):
-    data = yf.Ticker(ticker).history(period="1y", interval="1d")
+    stock = yf.Ticker(ticker)
+    data = stock.history(period="1y", interval="1d")
     if data.empty:
         raise HTTPException(status_code=404, detail=f"No analysis data found for ticker: {ticker}")
 
@@ -107,6 +109,61 @@ def get_analysis(ticker: str):
             for index, row in anomaly_rows.iterrows()
         ]
 
+    # 4) NLP sentiment analysis on recent news headlines using VADER
+    # VADER (Valence Aware Dictionary and sEntiment Reasoner) is a lexicon + rule-based NLP model.
+    # It maps words/phrases to sentiment intensity and applies heuristics (negation, capitalization,
+    # punctuation emphasis, degree modifiers like "very") to produce robust sentiment for short text
+    # such as financial/news headlines.
+    analyzer = SentimentIntensityAnalyzer()
+    headlines = []
+    headline_sentiments = []
+    sentiment_error = None
+
+    # yfinance news can fail (network, upstream API changes, ticker without coverage), so we wrap
+    # extraction in try/except and return a safe fallback payload rather than breaking the whole endpoint.
+    try:
+        raw_news = stock.news or []
+        for item in raw_news[:10]:
+            title = (item.get("title") or "").strip()
+            if not title:
+                continue
+            headlines.append(title)
+
+            # VADER returns: neg, neu, pos, compound.
+            # `compound` is the normalized weighted composite score in [-1, 1], where:
+            # -1 is most negative, +1 is most positive, and values near 0 are neutral/mixed.
+            score = analyzer.polarity_scores(title)
+            headline_sentiments.append(
+                {
+                    "headline": title,
+                    "compound": float(score["compound"]),
+                    "positive": float(score["pos"]),
+                    "neutral": float(score["neu"]),
+                    "negative": float(score["neg"]),
+                }
+            )
+    except Exception as exc:
+        sentiment_error = f"Failed to fetch or parse news from yfinance: {str(exc)}"
+
+    overall_compound = 0.0
+    if headline_sentiments:
+        overall_compound = float(
+            sum(item["compound"] for item in headline_sentiments) / len(headline_sentiments)
+        )
+
+    # Standard VADER interpretation thresholds:
+    # compound > 0.05  => positive sentiment (Bullish)
+    # compound < -0.05 => negative sentiment (Bearish)
+    # otherwise        => neutral sentiment
+    # These thresholds come from VADER's recommended calibration and help avoid overreacting
+    # to very small score fluctuations around zero.
+    if overall_compound > 0.05:
+        sentiment_label = "Bullish"
+    elif overall_compound < -0.05:
+        sentiment_label = "Bearish"
+    else:
+        sentiment_label = "Neutral"
+
     return {
         "ticker": ticker,
         "trend_analysis": {
@@ -116,4 +173,12 @@ def get_analysis(ticker: str):
         },
         "support_resistance_levels": sr_levels,
         "volume_anomalies": anomalies,
+        "news_sentiment": {
+            "overall_compound_score": overall_compound,
+            "label": sentiment_label,
+            "headlines_analyzed": len(headline_sentiments),
+            "headlines": headlines,
+            "headline_sentiments": headline_sentiments,
+            "error": sentiment_error,
+        },
     }
