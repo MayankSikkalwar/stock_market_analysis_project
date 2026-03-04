@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from gnews import GNews
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.ensemble import IsolationForest
@@ -29,6 +30,14 @@ TIMEFRAME_TO_PERIOD = {
     "3M": "3mo",
     "6M": "6mo",
     "1Y": "1y",
+}
+
+TICKER_TO_COMPANY = {
+    "RELIANCE.NS": "Reliance Industries",
+    "HDFCBANK.NS": "HDFC Bank",
+    "TCS.NS": "Tata Consultancy Services",
+    "ITC.NS": "ITC Limited",
+    "SUNPHARMA.NS": "Sun Pharmaceutical",
 }
 
 
@@ -119,11 +128,18 @@ def get_analysis(ticker: str):
     headline_sentiments = []
     sentiment_error = None
 
-    # yfinance news can fail (network, upstream API changes, ticker without coverage), so we wrap
+    # News providers can fail (network issues, upstream feed/API changes, query miss), so we wrap
     # extraction in try/except and return a safe fallback payload rather than breaking the whole endpoint.
     try:
-        raw_news = stock.news or []
-        for item in raw_news[:10]:
+        # gnews fetches Google News RSS results. We use the company name for better relevance
+        # and append "NSE stock India" to bias toward Indian market coverage.
+        query_company = TICKER_TO_COMPANY.get(ticker.upper(), ticker.replace(".NS", ""))
+        query = f"{query_company} NSE stock India"
+
+        google_news = GNews(language="en", country="IN", max_results=5)
+        raw_news = google_news.get_news(query)
+
+        for item in raw_news:
             title = (item.get("title") or "").strip()
             if not title:
                 continue
@@ -143,7 +159,7 @@ def get_analysis(ticker: str):
                 }
             )
     except Exception as exc:
-        sentiment_error = f"Failed to fetch or parse news from yfinance: {str(exc)}"
+        sentiment_error = f"Failed to fetch or parse news from gnews: {str(exc)}"
 
     overall_compound = 0.0
     if headline_sentiments:
