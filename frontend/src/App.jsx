@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AITrendWidget from "./components/dashboard/AITrendWidget";
 import ChartWidget from "./components/dashboard/ChartWidget";
 import ChatbotWidget from "./components/dashboard/ChatbotWidget";
@@ -15,6 +15,68 @@ export default function App() {
   // centralized prevents inconsistent UI state between panels and simplifies data fetching later.
   const [selectedStock, setSelectedStock] = useState("RELIANCE.NS");
   const [selectedTimeframe, setSelectedTimeframe] = useState("6M");
+  const [historicalData, setHistoricalData] = useState([]);
+  const [analysisData, setAnalysisData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let isActive = true;
+
+    /**
+     * Fetches chart candles + analysis in parallel for lower UI wait time.
+     * Robust error handling is centralized here so child widgets stay simple
+     * and can render pure loading/error/data states from props.
+     */
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const historicalUrl = `http://127.0.0.1:8000/api/historical/${selectedStock}?period=${selectedTimeframe}&timeframe=${selectedTimeframe}`;
+        const analysisUrl = `http://127.0.0.1:8000/api/analysis/${selectedStock}`;
+
+        const [historicalRes, analysisRes] = await Promise.all([
+          fetch(historicalUrl, { signal: controller.signal }),
+          fetch(analysisUrl, { signal: controller.signal }),
+        ]);
+
+        if (!historicalRes.ok) {
+          throw new Error(`Historical API failed (${historicalRes.status})`);
+        }
+        if (!analysisRes.ok) {
+          throw new Error(`Analysis API failed (${analysisRes.status})`);
+        }
+
+        const historicalJson = await historicalRes.json();
+        const analysisJson = await analysisRes.json();
+
+        if (!isActive) return;
+        setHistoricalData(Array.isArray(historicalJson?.candles) ? historicalJson.candles : []);
+        setAnalysisData(analysisJson ?? null);
+      } catch (fetchErr) {
+        if (controller.signal.aborted) return;
+        const message =
+          fetchErr instanceof Error
+            ? fetchErr.message
+            : "Unexpected error while loading dashboard data.";
+        if (!isActive) return;
+        setError(message);
+        setHistoricalData([]);
+        setAnalysisData(null);
+      } finally {
+        if (!isActive) return;
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, [selectedStock, selectedTimeframe]);
 
   return (
     <div className="h-screen w-screen overflow-y-auto bg-[#0b0e14] text-slate-300 flex flex-col lg:overflow-hidden">
@@ -34,7 +96,13 @@ export default function App() {
 
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-[360px] w-full lg:min-h-0 lg:flex-1">
-            <ChartWidget selectedStock={selectedStock} selectedTimeframe={selectedTimeframe} />
+            <ChartWidget
+              selectedStock={selectedStock}
+              selectedTimeframe={selectedTimeframe}
+              historicalData={historicalData}
+              isLoading={isLoading}
+              error={error}
+            />
           </div>
 
           <div className="min-h-[220px] w-full lg:h-[220px] lg:min-h-0 lg:shrink-0">
@@ -43,7 +111,12 @@ export default function App() {
         </div>
 
         <div className="min-h-[360px] w-full border-t border-slate-800 lg:min-h-0 lg:w-80 lg:border-t-0">
-          <AITrendWidget selectedStock={selectedStock} />
+          <AITrendWidget
+            selectedStock={selectedStock}
+            analysisData={analysisData}
+            isLoading={isLoading}
+            error={error}
+          />
         </div>
       </main>
     </div>
