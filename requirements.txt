@@ -9,3 +9,4 @@ pandas
 numpy
 pydantic
 python-dotenv
+gnews
