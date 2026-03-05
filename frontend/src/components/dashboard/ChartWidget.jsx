@@ -1,5 +1,5 @@
 import { BarChart3 } from "lucide-react";
-import { CandlestickSeries, createChart } from "lightweight-charts";
+import { createChart } from "lightweight-charts";
 import { useEffect, useMemo, useRef } from "react";
 
 /**
@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef } from "react";
  * - selectedStock: ticker symbol currently in focus.
  * - selectedTimeframe: timeframe currently selected in navbar.
  * - historicalData: OHLC array from backend.
+ * - analysisData: ML analysis payload including Isolation Forest anomalies.
  * - isLoading: loading flag for UX feedback.
  * - error: optional error message from parent fetch layer.
  */
@@ -15,6 +16,7 @@ export default function ChartWidget({
   selectedStock,
   selectedTimeframe,
   historicalData,
+  analysisData,
   isLoading,
   error,
 }) {
@@ -31,7 +33,7 @@ export default function ChartWidget({
     if (!Array.isArray(historicalData)) return [];
     return historicalData
       .map((item) => ({
-        time: item?.date ?? item?.Date,
+        time: item?.time ?? item?.date ?? item?.Date,
         open: Number(item?.open ?? item?.Open),
         high: Number(item?.high ?? item?.High),
         low: Number(item?.low ?? item?.Low),
@@ -70,7 +72,7 @@ export default function ChartWidget({
       timeScale: { borderColor: "rgba(51, 65, 85, 0.6)" },
     });
 
-    const candleSeries = chart.addSeries(CandlestickSeries, {
+    const candleSeries = chart.addCandlestickSeries({
       upColor: "#10b981",
       downColor: "#ef4444",
       borderUpColor: "#10b981",
@@ -103,6 +105,42 @@ export default function ChartWidget({
     candleSeriesRef.current.setData(candleData);
     chartRef.current?.timeScale().fitContent();
   }, [candleData]);
+
+  useEffect(() => {
+    if (!candleSeriesRef.current || !historicalData || historicalData.length === 0) return;
+    // Debugging logs to prove the data reached the component
+    console.log("DEBUG - analysisData received:", analysisData);
+    if (analysisData && analysisData.volume_anomalies) {
+      console.log("DEBUG - Raw volume_anomalies:", analysisData.volume_anomalies);
+      // Safely normalize dates whether Python sent them as strings or objects
+      const anomalyDates = new Set(
+        analysisData.volume_anomalies.map((item) => {
+          const dateStr = typeof item === "string" ? item : item.date || item.time || "";
+          return dateStr.split("T")[0];
+        })
+      );
+      const markers = [];
+      historicalData.forEach((candle) => {
+        // Ensure candle time is a YYYY-MM-DD string
+        const candleDateStr =
+          typeof candle.time === "string"
+            ? candle.time.split("T")[0]
+            : new Date(candle.time * 1000).toISOString().split("T")[0];
+
+        if (anomalyDates.has(candleDateStr)) {
+          markers.push({
+            time: candle.time,
+            position: "aboveBar",
+            color: "#eab308",
+            shape: "arrowDown",
+            text: "Volume Anomaly",
+          });
+        }
+      });
+      console.log("DEBUG - Total markers generated:", markers.length);
+      candleSeriesRef.current.setMarkers(markers);
+    }
+  }, [analysisData, historicalData]); // CRITICAL: Depend on both!
 
   return (
     <section className="flex h-full min-h-0 flex-col bg-[#0b0f18]">

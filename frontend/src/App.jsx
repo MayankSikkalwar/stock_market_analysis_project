@@ -49,7 +49,13 @@ export default function App() {
         const historicalJson = await historicalRes.json();
 
         if (!isActive) return;
-        setHistoricalData(Array.isArray(historicalJson?.candles) ? historicalJson.candles : []);
+        const normalizedCandles = Array.isArray(historicalJson?.candles)
+          ? historicalJson.candles.map((item) => ({
+              ...item,
+              time: item?.time ?? item?.date ?? item?.Date,
+            }))
+          : [];
+        setHistoricalData(normalizedCandles);
       } catch (fetchErr) {
         if (controller.signal.aborted) return;
         const message =
@@ -118,6 +124,7 @@ export default function App() {
               selectedStock={selectedStock}
               selectedTimeframe={selectedTimeframe}
               historicalData={historicalData}
+              analysisData={analysisData}
               isLoading={isLoading}
               error={error}
             />
