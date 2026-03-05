@@ -8,3 +8,4 @@ groq
 pandas
 numpy
 pydantic
+python-dotenv
