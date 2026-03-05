@@ -105,7 +105,7 @@ export default function ChartWidget({
   }, [candleData]);
 
   return (
-    <section className="flex h-full flex-col bg-[#0b0f18]">
+    <section className="flex h-full min-h-0 flex-col bg-[#0b0f18]">
       <div className="flex h-10 items-center justify-between border-b border-slate-800 px-3">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-3.5 w-3.5 text-slate-400" />
@@ -116,8 +116,8 @@ export default function ChartWidget({
         </p>
       </div>
 
-      <div className="flex-1 p-3">
-        <div className="relative h-full rounded-sm border border-slate-700 bg-slate-900/20">
+      <div className="relative flex-1 min-h-0 p-3">
+        <div className="relative h-full min-h-0 rounded-sm border border-slate-700 bg-slate-900/20">
           <div ref={containerRef} className="h-full w-full" />
 
           {isLoading && (

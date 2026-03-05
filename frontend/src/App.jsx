@@ -18,56 +18,74 @@ export default function App() {
   const [historicalData, setHistoricalData] = useState([]);
   const [analysisData, setAnalysisData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [analysisLoading, setAnalysisLoading] = useState(true);
   const [error, setError] = useState("");
+  const [analysisError, setAnalysisError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
     let isActive = true;
 
     /**
-     * Fetches chart candles + analysis in parallel for lower UI wait time.
-     * Robust error handling is centralized here so child widgets stay simple
-     * and can render pure loading/error/data states from props.
+     * Decoupled fetch flow:
+     * 1) Fetch historical data first and render chart immediately.
+     * 2) Fetch analysis data after that without blocking chart paint.
      */
     const fetchDashboardData = async () => {
       setIsLoading(true);
+      setAnalysisLoading(true);
       setError("");
+      setAnalysisError("");
+      setAnalysisData(null);
 
       try {
         const historicalUrl = `http://127.0.0.1:8000/api/historical/${selectedStock}?period=${selectedTimeframe}&timeframe=${selectedTimeframe}`;
-        const analysisUrl = `http://127.0.0.1:8000/api/analysis/${selectedStock}`;
-
-        const [historicalRes, analysisRes] = await Promise.all([
-          fetch(historicalUrl, { signal: controller.signal }),
-          fetch(analysisUrl, { signal: controller.signal }),
-        ]);
+        const historicalRes = await fetch(historicalUrl, { signal: controller.signal });
 
         if (!historicalRes.ok) {
           throw new Error(`Historical API failed (${historicalRes.status})`);
         }
+
+        const historicalJson = await historicalRes.json();
+
+        if (!isActive) return;
+        setHistoricalData(Array.isArray(historicalJson?.candles) ? historicalJson.candles : []);
+      } catch (fetchErr) {
+        if (controller.signal.aborted) return;
+        const message =
+          fetchErr instanceof Error
+            ? fetchErr.message
+            : "Unexpected error while loading historical data.";
+        if (!isActive) return;
+        setError(message);
+        setHistoricalData([]);
+      } finally {
+        if (!isActive) return;
+        setIsLoading(false);
+      }
+
+      try {
+        const analysisUrl = `http://127.0.0.1:8000/api/analysis/${selectedStock}`;
+        const analysisRes = await fetch(analysisUrl, { signal: controller.signal });
         if (!analysisRes.ok) {
           throw new Error(`Analysis API failed (${analysisRes.status})`);
         }
 
-        const historicalJson = await historicalRes.json();
         const analysisJson = await analysisRes.json();
-
         if (!isActive) return;
-        setHistoricalData(Array.isArray(historicalJson?.candles) ? historicalJson.candles : []);
         setAnalysisData(analysisJson ?? null);
       } catch (fetchErr) {
         if (controller.signal.aborted) return;
         const message =
           fetchErr instanceof Error
             ? fetchErr.message
-            : "Unexpected error while loading dashboard data.";
+            : "Unexpected error while loading analysis data.";
         if (!isActive) return;
-        setError(message);
-        setHistoricalData([]);
+        setAnalysisError(message);
         setAnalysisData(null);
       } finally {
         if (!isActive) return;
-        setIsLoading(false);
+        setAnalysisLoading(false);
       }
     };
 
@@ -95,7 +113,7 @@ export default function App() {
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-[360px] w-full lg:min-h-0 lg:flex-1">
+          <div className="w-full min-h-[360px] flex-1 min-h-0">
             <ChartWidget
               selectedStock={selectedStock}
               selectedTimeframe={selectedTimeframe}
@@ -104,21 +122,19 @@ export default function App() {
               error={error}
             />
           </div>
-
-          <div className="min-h-[220px] w-full lg:h-[220px] lg:min-h-0 lg:shrink-0">
-            <ChatbotWidget selectedStock={selectedStock} selectedTimeframe={selectedTimeframe} />
-          </div>
         </div>
 
         <div className="min-h-[360px] w-full border-t border-slate-800 lg:min-h-0 lg:w-80 lg:border-t-0">
           <AITrendWidget
             selectedStock={selectedStock}
             analysisData={analysisData}
-            isLoading={isLoading}
-            error={error}
+            isLoading={analysisLoading}
+            error={analysisError}
           />
         </div>
       </main>
+
+      <ChatbotWidget selectedStock={selectedStock} selectedTimeframe={selectedTimeframe} />
     </div>
   );
 }

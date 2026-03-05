@@ -1,5 +1,5 @@
 import { Bot, SendHorizontal } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Bottom execution/chat panel for Groq advisor interactions.
@@ -8,9 +8,15 @@ import { useState } from "react";
  * - selectedTimeframe: active timeframe to frame analysis context.
  */
 export default function ChatbotWidget({ selectedStock, selectedTimeframe }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const endRef = useRef(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [chatHistory, isTyping]);
 
   /**
    * Sends user message to backend chat endpoint and appends responses
@@ -60,46 +66,64 @@ export default function ChatbotWidget({ selectedStock, selectedTimeframe }) {
     }
   };
 
+  if (!isOpen) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-2xl transition hover:from-blue-500 hover:to-indigo-500"
+        aria-label="Open Groq AI Advisor"
+      >
+        <Bot className="h-6 w-6" />
+      </button>
+    );
+  }
+
   return (
-    <section className="flex h-full flex-col border-t border-slate-800 bg-[#0c1119]">
-      <div className="flex h-10 items-center justify-between border-b border-slate-800 px-3">
+    <section className="fixed bottom-6 right-6 z-50 flex h-[500px] w-80 max-h-[80vh] flex-col rounded-xl border border-slate-700 bg-slate-900/95 shadow-2xl backdrop-blur-md sm:w-96">
+      <div className="flex h-11 shrink-0 items-center justify-between border-b border-slate-800 px-3">
         <div className="flex items-center gap-2">
           <Bot className="h-3.5 w-3.5 text-cyan-300" />
           <p className="text-xs font-semibold text-slate-300">Groq AI Advisor</p>
         </div>
-        <p className="text-xs text-slate-500">
-          Context: {selectedStock} • {selectedTimeframe}
-        </p>
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          className="rounded-sm px-2 py-1 text-xs text-slate-400 transition hover:bg-slate-800/70 hover:text-white"
+        >
+          X
+        </button>
       </div>
 
-      <div className="flex-1 p-3">
-        <div className="h-full overflow-y-auto rounded-sm border border-slate-800 bg-slate-900/30 p-3">
+      <div className="px-3 pt-2 text-[11px] text-slate-500">
+        Context: {selectedStock} • {selectedTimeframe}
+      </div>
+
+      <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-3">
           {chatHistory.length === 0 && (
             <p className="text-xs text-slate-500">
               Ask about trend strength, risk zones, or sentiment-driven moves.
             </p>
           )}
 
-          <div className="space-y-2">
-            {chatHistory.map((message, index) => (
-              <div
-                key={`${message.role}-${index}`}
-                className={`max-w-[90%] rounded-sm px-2 py-1.5 text-xs ${
-                  message.role === "user"
-                    ? "ml-auto border border-blue-500/40 bg-blue-500/10 text-slate-200"
-                    : "border border-slate-700 bg-slate-800/50 text-slate-300"
-                }`}
-              >
-                {message.text}
-              </div>
-            ))}
+          {chatHistory.map((message, index) => (
+            <div
+              key={`${message.role}-${index}`}
+              className={`max-w-[90%] rounded-sm px-2 py-1.5 text-xs ${
+                message.role === "user"
+                  ? "ml-auto border border-blue-500/40 bg-blue-500/10 text-slate-200"
+                  : "border border-slate-700 bg-slate-800/50 text-slate-300"
+              }`}
+            >
+              {message.text}
+            </div>
+          ))}
 
-            {isTyping && <p className="text-xs text-emerald-400">AI is typing...</p>}
-          </div>
-        </div>
+          {isTyping && <p className="text-xs text-emerald-400">AI is typing...</p>}
+          <div ref={endRef} />
       </div>
 
-      <div className="border-t border-slate-800 p-2">
+      <div className="mt-auto shrink-0 border-t border-slate-800 p-3">
         <form
           onSubmit={handleSubmit}
           className="flex items-center gap-2 rounded-sm border border-slate-700 bg-slate-900/40 px-2 py-1.5"
