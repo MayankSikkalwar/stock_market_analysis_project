@@ -1,190 +1,350 @@
-# FinVise AI - Institutional-Grade NSE Intelligence Terminal
+# 🚀 FinVise AI — Institutional-Grade NSE Intelligence Terminal
 
-FinVise AI is a production-ready, full-stack market intelligence platform for the National Stock Exchange (NSE). It combines real-time market analytics, explainable machine learning signals, and a context-aware AI assistant into a single terminal-style interface.
+![React](https://img.shields.io/badge/Frontend-React-blue)
+![FastAPI](https://img.shields.io/badge/Backend-FastAPI-green)
+![Python](https://img.shields.io/badge/Python-ML-yellow)
+![Groq](https://img.shields.io/badge/LLM-Groq-orange)
+![License](https://img.shields.io/badge/License-Academic-lightgrey)
 
-## Live Deployment
+**FinVise AI** is a **full-stack AI-powered market intelligence terminal** for the **National Stock Exchange (NSE)**.
 
-- Frontend URL: `https://<your-frontend-url>`
-- Backend URL: `https://<your-backend-url>`
+It combines:
 
-## Project Objective
+* 📊 Real-time market analytics
+* 🧠 Machine learning based market signals
+* 📰 News sentiment intelligence
+* 🤖 Context-aware AI trading assistant
 
-Build an institutional-style decision-support terminal that helps users analyze price structure, detect anomalous activity, interpret news sentiment, and query an AI advisor grounded in live market context.
+into a **single institutional-style dashboard interface**.
 
-## Stock Selection Justification
+The system transforms **raw market data → intelligent decision signals** using a layered AI pipeline.
 
-The platform focuses on five NSE leaders selected to provide broad sectoral diversification across the core engines of the Indian economy:
+---
 
-- `RELIANCE.NS` (Reliance Industries): Energy + Conglomerate exposure
-- `HDFCBANK.NS` (HDFC Bank): Financials and credit-cycle sensitivity
-- `TCS.NS` (Tata Consultancy Services): IT services and export-led digital demand
-- `ITC.NS` (ITC Limited): FMCG/defensive consumption profile
-- `SUNPHARMA.NS` (Sun Pharmaceutical): Healthcare and pharma resilience
+# 🌐 Live Deployment
+[https://finvise-ai-sandy.vercel.app/](https://finvise-ai-sandy.vercel.app/)
 
-This basket intentionally balances cyclicals, defensives, domestic consumption, and global-revenue businesses to support robust cross-sector signal comparison.
 
-## Dual-Role Engineering Architecture
+---
 
-This project demonstrates two complementary engineering competencies:
 
-### Full-Stack Developer Scope
+# 🎯 Project Objective
 
-- Frontend built with `Vite` + `React`
-- Utility-first styling using `Tailwind CSS v4`
-- Financial chart rendering with `Lightweight Charts`
-- Modular dashboard architecture (`ChartWidget`, `AITrendWidget`, `ChatbotWidget`, shared state in `App.jsx`)
-- Environment-driven API routing for production (`VITE_API_URL`)
+FinVise AI was designed to simulate an **institutional-grade decision support terminal** similar to tools used by professional analysts.
 
-### AI/ML Engineer Scope
+The platform helps users:
 
-- ML-driven support/resistance inference from market structure
-- Unsupervised anomaly detection for unusual volume events
-- NLP sentiment scoring over live financial/news text
-- Context-aware LLM pipeline with retrieval and structured prompt grounding
+* Analyze **price structure**
+* Detect **volume anomalies**
+* Interpret **news sentiment**
+* Query an **AI assistant grounded in live market context**
 
-## Machine Learning Pipeline
+---
 
-FinVise AI uses a layered ML pipeline to convert raw market data into actionable intelligence:
+# 📈 Stock Selection Strategy
 
-### 1) K-Means Clustering (Support/Resistance Estimation)
+The platform focuses on **five NSE leaders** representing major sectors of the Indian economy.
 
-- Price zones are clustered to identify repeatedly visited levels.
-- Cluster centroids are projected as candidate support/resistance regions.
-- This reduces noise and improves structural interpretation versus naive single-point highs/lows.
+| Stock        | Sector                |
+| ------------ | --------------------- |
+| RELIANCE.NS  | Energy / Conglomerate |
+| HDFCBANK.NS  | Financial Services    |
+| TCS.NS       | IT & Technology       |
+| ITC.NS       | FMCG / Consumer       |
+| SUNPHARMA.NS | Healthcare / Pharma   |
 
-### 2) Isolation Forest (Volume Anomaly Detection)
+This diversified basket enables **cross-sector signal comparison**.
 
-- Volume series is evaluated with Isolation Forest to detect statistically rare surges.
-- Detected anomalies are surfaced on chart as yellow downward arrows for quick visual triage.
-- This helps identify potential distribution, event-driven flow, or unusual participation spikes.
+---
 
-### 3) VADER NLP (Live News Sentiment)
+# 🧠 Machine Learning Intelligence Layer
 
-- Incoming headlines/text are normalized and scored with VADER.
-- Compound sentiment is mapped to bullish/neutral/bearish context.
-- Sentiment signal is integrated with technical/volume cues for richer multi-factor interpretation.
+FinVise AI converts market data into **actionable intelligence** using multiple ML models.
 
-## AI Agent: Context-Aware RAG Pipeline (Groq + Llama 3)
+---
 
-The chatbot is not a generic prompt wrapper. It follows a contextual retrieval-augmented process:
+## 1️⃣ K-Means Clustering — Support & Resistance Detection
 
-1. Collect active terminal context (selected stock, timeframe, latest analytics).
-2. Retrieve relevant structured signals (trend, levels, anomalies, sentiment).
-3. Build a constrained prompt with grounded evidence.
-4. Generate response via `Groq` inference using `Llama 3`.
-5. Return concise analysis aligned with current market state.
+Price levels are clustered to identify **repeated market interaction zones**.
 
-Result: faster, context-sensitive outputs with lower hallucination risk than unconstrained chat completion.
+Instead of naive highs/lows, clustering reveals **true structural levels**.
 
-## Tech Stack
+**Output**
 
-### Frontend
+• Support zones
+• Resistance zones
+• Market structure interpretation
 
-- React
-- Vite
-- Tailwind CSS v4
-- Lightweight Charts
+---
 
-### Backend
+## 2️⃣ Isolation Forest — Volume Anomaly Detection
 
-- FastAPI
-- Uvicorn
-- yFinance
-- pandas, numpy
-- scikit-learn
-- NLTK + VADER Sentiment
-- Groq SDK
+The model identifies **statistically rare volume spikes**.
 
-## Repository Structure
+These spikes often indicate:
 
-```text
-.
-├── frontend/
-│   ├── src/
+* Institutional activity
+* Event-driven trading
+* Market distribution phases
+
+Detected anomalies appear on the chart as:
+
+⬇ Yellow arrows
+
+---
+
+## 3️⃣ VADER NLP — News Sentiment Intelligence
+
+Financial news headlines are processed using **VADER sentiment analysis**.
+
+Sentiment scores classify market tone as:
+
+* 🟢 Bullish
+* ⚪ Neutral
+* 🔴 Bearish
+
+The sentiment signal is combined with **technical signals** for multi-factor analysis.
+
+---
+
+# 🤖 AI Market Assistant (RAG Pipeline)
+
+The chatbot uses a **Retrieval-Augmented Generation architecture**.
+
+Instead of generic LLM responses, it follows a structured pipeline:
+
+1️⃣ Collect terminal context
+(selected stock, timeframe, analytics)
+
+2️⃣ Retrieve structured signals
+(trend, sentiment, anomalies)
+
+3️⃣ Build grounded prompt
+
+4️⃣ Generate response using **Groq + Llama 3**
+
+5️⃣ Return concise market analysis
+
+### Result
+
+⚡ Faster responses
+🧠 Context-aware answers
+📉 Reduced hallucination risk
+
+---
+
+# ⚙️ Tech Stack
+
+## Frontend
+
+* React
+* Vite
+* Tailwind CSS v4
+* Lightweight Charts
+
+## Backend
+
+* FastAPI
+* Uvicorn
+* gnews
+
+## Machine Learning
+
+* pandas
+* numpy
+* scikit-learn
+
+## NLP
+
+* NLTK
+* VADER Sentiment
+
+## AI
+
+* Groq SDK
+* Llama 3
+
+---
+
+# 🏗 System Architecture
+
+```
+Market Data (yFinance)
+        │
+        ▼
+Data Processing (pandas / numpy)
+        │
+        ▼
+ML Analytics Layer
+ ├─ K-Means (Support/Resistance)
+ ├─ Isolation Forest (Volume Anomaly)
+ └─ VADER NLP (News Sentiment)
+        │
+        ▼
+FastAPI Backend
+        │
+        ▼
+React Dashboard
+        │
+        ▼
+AI Assistant (Groq + Llama 3)
+```
+
+---
+
+# 📂 Repository Structure
+
+```
+FinVise-AI
+│
+├── frontend
+│   ├── src
 │   │   ├── App.jsx
-│   │   └── components/dashboard/
+│   │   └── components/dashboard
 │   │       ├── ChartWidget.jsx
 │   │       ├── AITrendWidget.jsx
 │   │       └── ChatbotWidget.jsx
+│
 ├── main.py
 ├── requirements.txt
 ├── Procfile
 └── README.md
 ```
 
-## Local Setup and Run
+---
 
-### 1) Clone and enter project
+# ⚡ Local Setup
 
-```bash
+## 1️⃣ Clone Repository
+
+```
 git clone <your-repo-url>
-cd Stock_Market_Analysis_project
+cd FinVise-AI
 ```
 
-### 2) Backend setup
+---
 
-```bash
+## 2️⃣ Backend Setup
+
+```
 python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
-source .venv/bin/activate
+```
 
+Activate environment
+
+Windows
+
+```
+.venv\Scripts\activate
+```
+
+Mac/Linux
+
+```
+source .venv/bin/activate
+```
+
+Install dependencies
+
+```
 pip install -r requirements.txt
 ```
 
-Create backend environment file:
+Create `.env`
 
-```env
+```
 GROQ_API_KEY=your_groq_api_key
 ```
 
-Run backend:
+Run backend
 
-```bash
+```
 uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-### 3) Frontend setup
+---
 
-```bash
+## 3️⃣ Frontend Setup
+
+```
 cd frontend
 npm install
 ```
 
-Create frontend environment file (`frontend/.env`):
+Create `.env`
 
-```env
+```
 VITE_API_URL=http://127.0.0.1:8000
 ```
 
-Run frontend:
+Run frontend
 
-```bash
+```
 npm run dev
 ```
 
-## Production Deployment
+---
 
-### Backend (Render)
+# 🚀 Production Deployment
 
-- Build command: `pip install -r requirements.txt`
-- Start command (or Procfile): `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- Set environment variable: `GROQ_API_KEY`
+## Backend (Render)
 
-### Frontend
+Build command
 
-- Deploy Vite build to your hosting provider.
-- Set `VITE_API_URL` to deployed backend URL.
-- Ensure backend CORS allows frontend domain.
+```
+pip install -r requirements.txt
+```
 
-## Evaluation Highlights
+Start command
 
-- End-to-end ownership across UI engineering, backend APIs, ML analytics, and LLM integration
-- Production deployment readiness (env-based configuration + Render Procfile)
-- Explainable multi-factor intelligence instead of single-indicator heuristics
-- Assignment-aligned sector-diversified NSE coverage for analytical breadth
+```
+uvicorn main:app --host 0.0.0.0 --port $PORT
+```
 
-## License
+Environment Variable
 
-For academic/portfolio demonstration purposes.
+```
+GROQ_API_KEY
+```
+
+---
+
+## Frontend
+
+Deploy using:
+
+* Vercel
+* Netlify
+* Cloudflare
+
+Set environment variable:
+
+```
+VITE_API_URL=<backend-url>
+```
+
+---
+
+# ⭐ Key Highlights
+
+✔ Full-stack AI application
+✔ Real-time financial analytics
+✔ Explainable ML signals
+✔ RAG-based AI assistant
+✔ Institutional-style dashboard
+✔ Production deployment ready
+
+---
+
+# 👨‍💻 Author
+
+**Mayank Sikkalwar**
+
+Computer Science Engineering Student
+AI / ML • Full Stack Development • Financial AI Systems
+
+---
+
+# 📜 License
+
+This project is developed for **academic and portfolio demonstration purposes**.
