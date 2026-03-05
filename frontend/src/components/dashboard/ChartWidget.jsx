@@ -133,7 +133,6 @@ export default function ChartWidget({
             position: "aboveBar",
             color: "#eab308",
             shape: "arrowDown",
-            text: "Volume Anomaly",
           });
         }
       });
