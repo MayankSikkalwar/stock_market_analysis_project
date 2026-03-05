@@ -7,7 +7,7 @@ import { Layers, TrendingUp } from "lucide-react";
  */
 export default function AITrendWidget({ selectedStock }) {
   return (
-    <section className="flex h-full flex-col border-l border-slate-800 bg-[#0d121b]">
+    <section className="flex h-full flex-col bg-[#0d121b] lg:border-l lg:border-slate-800">
       <div className="flex h-10 items-center border-b border-slate-800 px-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">AI Insights</p>
       </div>

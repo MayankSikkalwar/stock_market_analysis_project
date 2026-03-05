@@ -17,32 +17,33 @@ export default function App() {
   const [selectedTimeframe, setSelectedTimeframe] = useState("6M");
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#0b0e14] text-slate-300 flex flex-col">
+    <div className="h-screen w-screen overflow-y-auto bg-[#0b0e14] text-slate-300 flex flex-col lg:overflow-hidden">
       <Navbar
         selectedTimeframe={selectedTimeframe}
         onTimeframeChange={setSelectedTimeframe}
         timeframes={TIMEFRAMES}
       />
 
-      {/* Terminal layout:
-          Full-height content area is segmented into left watchlist, center trading workspace,
-          and right AI panel. Borders create clear panel dividers without soft card styling,
-          matching professional trading terminal conventions. */}
-      <main className="grid min-h-0 flex-1 grid-cols-[220px_1fr_320px] grid-rows-[1fr_220px]">
-        <div className="row-span-2 min-h-0">
+      {/* Responsive terminal layout:
+          Mobile: stacked flow with horizontal watchlist and scrollable vertical sections.
+          Desktop (lg): returns to locked, edge-to-edge trading terminal with left/center/right panels. */}
+      <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <div className="w-full border-b border-slate-800 lg:w-56 lg:min-h-0 lg:border-b-0">
           <Sidebar stocks={STOCKS} selectedStock={selectedStock} onStockChange={setSelectedStock} />
         </div>
 
-        <div className="min-h-0">
-          <ChartWidget selectedStock={selectedStock} selectedTimeframe={selectedTimeframe} />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-[360px] w-full lg:min-h-0 lg:flex-1">
+            <ChartWidget selectedStock={selectedStock} selectedTimeframe={selectedTimeframe} />
+          </div>
+
+          <div className="min-h-[220px] w-full lg:h-[220px] lg:min-h-0 lg:shrink-0">
+            <ChatbotWidget selectedStock={selectedStock} selectedTimeframe={selectedTimeframe} />
+          </div>
         </div>
 
-        <div className="row-span-2 min-h-0">
+        <div className="min-h-[360px] w-full border-t border-slate-800 lg:min-h-0 lg:w-80 lg:border-t-0">
           <AITrendWidget selectedStock={selectedStock} />
-        </div>
-
-        <div className="min-h-0">
-          <ChatbotWidget selectedStock={selectedStock} selectedTimeframe={selectedTimeframe} />
         </div>
       </main>
     </div>
