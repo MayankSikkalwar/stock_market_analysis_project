@@ -1,5 +1,6 @@
 import { Bot, SendHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 /**
  * Bottom execution/chat panel for Groq advisor interactions.
@@ -115,7 +116,13 @@ export default function ChatbotWidget({ selectedStock, selectedTimeframe }) {
                   : "border border-slate-700 bg-slate-800/50 text-slate-300"
               }`}
             >
-              {message.text}
+              {message.role === "ai" ? (
+                <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-p:mb-2 prose-strong:text-emerald-400 prose-ul:list-disc prose-ul:ml-4 prose-li:mb-1">
+                  <ReactMarkdown>{message.text}</ReactMarkdown>
+                </div>
+              ) : (
+                message.text
+              )}
             </div>
           ))}
 
