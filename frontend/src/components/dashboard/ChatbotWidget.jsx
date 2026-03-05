@@ -2,6 +2,8 @@ import { Bot, SendHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 /**
  * Bottom execution/chat panel for Groq advisor interactions.
  * Props:
@@ -33,7 +35,7 @@ export default function ChatbotWidget({ selectedStock, selectedTimeframe }) {
     setIsTyping(true);
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/chat/${selectedStock}`, {
+      const response = await fetch(`${API_BASE_URL}/api/chat/${selectedStock}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),

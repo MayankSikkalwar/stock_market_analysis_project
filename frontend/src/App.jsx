@@ -5,6 +5,7 @@ import ChatbotWidget from "./components/dashboard/ChatbotWidget";
 import Navbar from "./components/layout/Navbar";
 import Sidebar from "./components/layout/Sidebar";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 const STOCKS = ["RELIANCE.NS", "HDFCBANK.NS", "TCS.NS", "ITC.NS", "SUNPHARMA.NS"];
 const TIMEFRAMES = ["1M", "3M", "6M", "1Y"];
 
@@ -39,7 +40,7 @@ export default function App() {
       setAnalysisData(null);
 
       try {
-        const historicalUrl = `http://127.0.0.1:8000/api/historical/${selectedStock}?period=${selectedTimeframe}&timeframe=${selectedTimeframe}`;
+        const historicalUrl = `${API_BASE_URL}/api/historical/${selectedStock}?period=${selectedTimeframe}&timeframe=${selectedTimeframe}`;
         const historicalRes = await fetch(historicalUrl, { signal: controller.signal });
 
         if (!historicalRes.ok) {
@@ -71,7 +72,7 @@ export default function App() {
       }
 
       try {
-        const analysisUrl = `http://127.0.0.1:8000/api/analysis/${selectedStock}`;
+        const analysisUrl = `${API_BASE_URL}/api/analysis/${selectedStock}`;
         const analysisRes = await fetch(analysisUrl, { signal: controller.signal });
         if (!analysisRes.ok) {
           throw new Error(`Analysis API failed (${analysisRes.status})`);
