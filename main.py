@@ -1,13 +1,23 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 from gnews import GNews
+from groq import Groq
+import json
+import os
 import pandas as pd
+from pydantic import BaseModel, Field
 from sklearn.cluster import KMeans
 from sklearn.ensemble import IsolationForest
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import yfinance as yf
 
 app = FastAPI(title="Stock Market Analysis API")
+
+# load_dotenv() reads key/value pairs from a local `.env` file and injects them into
+# the process environment (os.environ). This keeps secrets like API keys out of source code.
+# By default, python-dotenv does not overwrite already-defined environment variables.
+load_dotenv()
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,6 +49,10 @@ TICKER_TO_COMPANY = {
     "ITC.NS": "ITC Limited",
     "SUNPHARMA.NS": "Sun Pharmaceutical",
 }
+
+
+class ChatRequest(BaseModel):
+    question: str = Field(..., min_length=3, max_length=1000)
 
 
 @app.get("/api/stocks")
@@ -197,4 +211,66 @@ def get_analysis(ticker: str):
             "headline_sentiments": headline_sentiments,
             "error": sentiment_error,
         },
+    }
+
+
+@app.post("/api/chat/{ticker}")
+def chat_with_analysis(ticker: str, payload: ChatRequest):
+    analysis_data = get_analysis(ticker)
+
+    # Read Groq credentials from environment after `.env` loading above.
+    # If the key is missing, we fail fast with a clear server-side configuration error.
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=500,
+            detail="GROQ_API_KEY is missing. Add it to your .env file and restart the server.",
+        )
+
+    # Allow model override via env while defaulting to a low-latency production-safe model.
+    model_name = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+
+    # Context Injection (lightweight RAG):
+    # Instead of asking the LLM to guess market conditions, we inject structured, up-to-date
+    # ML outputs (SMA trend, K-Means levels, anomalies, sentiment) directly into the system prompt.
+    # This grounds the response in our computed facts and reduces hallucinations.
+    analysis_json = json.dumps(analysis_data, indent=2)
+    system_prompt = f"""
+You are an expert stock analysis assistant.
+Use ONLY the provided analysis context when discussing this stock.
+If data is missing, explicitly say what is missing.
+Do not fabricate numbers.
+
+Analysis context (JSON):
+{analysis_json}
+"""
+
+    try:
+        # Groq client initialization binds the API key and prepares authenticated requests.
+        client = Groq(api_key=api_key)
+
+        completion = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": payload.question},
+            ],
+            temperature=0.2,
+            max_tokens=700,
+        )
+        answer = (completion.choices[0].message.content or "").strip()
+        if not answer:
+            raise ValueError("Empty response returned by Groq model.")
+    except Exception as exc:
+        # API/network/provider errors are wrapped as 502 to indicate upstream dependency failure.
+        raise HTTPException(
+            status_code=502,
+            detail=f"Groq API request failed: {str(exc)}",
+        ) from exc
+
+    return {
+        "ticker": ticker,
+        "question": payload.question,
+        "model": model_name,
+        "answer": answer,
     }
