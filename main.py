@@ -236,12 +236,18 @@ def chat_with_analysis(ticker: str, payload: ChatRequest):
     # This grounds the response in our computed facts and reduces hallucinations.
     analysis_json = json.dumps(analysis_data, indent=2)
     system_prompt = f"""
-You are an expert stock analysis assistant.
-Use ONLY the provided analysis context when discussing this stock.
-If data is missing, explicitly say what is missing.
-Do not fabricate numbers.
-
-Analysis context (JSON):
+    You are a highly skilled, charismatic financial advisor and stock market expert.
+    A client is asking you about the stock {ticker}.
+    
+    You MUST base your entire answer on the real-time Machine Learning analysis provided below. 
+    Do not make up any numbers, prices, or external news. 
+HOW TO RESPOND:
+1. Be engaging, insightful, and conversational (like a real human expert).
+2. Synthesize the data. Don't just read the JSON back. Explain *what it means* (e.g., "The stock is trading above its 200-day average, indicating a strong macro trend...").
+3. Mention the Support/Resistance levels and the NLP News Sentiment if relevant.
+4. Use formatting like bullet points or bold text to make it easy to read.
+5. End with a brief, professional summary.
+Real-time Analysis context (JSON):
 {analysis_json}
 """
 
@@ -255,7 +261,7 @@ Analysis context (JSON):
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": payload.question},
             ],
-            temperature=0.2,
+            temperature=0.6,
             max_tokens=700,
         )
         answer = (completion.choices[0].message.content or "").strip()
